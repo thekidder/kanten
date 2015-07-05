@@ -2,15 +2,14 @@ import AnimationFrame
 import Debug
 import Signal.Extra
 
-import Graphics.Element exposing (..)
-import Math.Vector3 exposing (..)
+import Graphics.Element exposing (Element)
+import Math.Vector3 exposing (Vec3, vec3)
 import Math.Vector3 as Vector3
-import Math.Matrix4 exposing (..)
-import Mouse exposing (..)
-import Signal exposing (..)
-import Time exposing (..)
-import WebGL exposing (..)
-import Window exposing (..)
+import Math.Matrix4 exposing (Mat4, makeOrtho2D)
+import Mouse exposing (position)
+import Signal exposing (mergeMany, foldp)
+import WebGL exposing (Triangle, Shader, entity, webgl)
+import Window exposing (dimensions)
 
 
 -- Define geometry and mesh functions
@@ -21,7 +20,7 @@ type alias Vertex = { position : Vec3, color : Vec3 }
 fromXY : (Float, Float) -> Vec3
 fromXY xy =
   let (x, y) = xy
-  in fromTuple (x, y, 0)
+  in vec3 x y 0
 
 
 -- create circle mesh from center pos, num segments, radius, rotation

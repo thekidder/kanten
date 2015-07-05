@@ -1,0 +1,20 @@
+{
+    "version": "0.0.1",
+    "summary": "2D game in Elm",
+    "repository": "https://github.com/thekidder/kanten.git",
+    "license": "none",
+    "source-directories": [
+        "."
+    ],
+    "exposed-modules": [],
+    "dependencies": {
+        "Apanatshka/elm-signal-extra": "5.1.1 <= v < 6.0.0",
+        "elm-lang/core": "2.1.0 <= v < 3.0.0",
+        "evancz/elm-html": "3.0.0 <= v < 4.0.0",
+        "evancz/start-app": "1.0.0 <= v < 2.0.0",
+        "johnpmayer/elm-linear-algebra": "2.0.1 <= v < 3.0.0",
+        "johnpmayer/elm-webgl": "3.0.0 <= v < 4.0.0",
+        "jwmerrill/elm-animation-frame": "1.0.3 <= v < 2.0.0"
+    },
+    "elm-version": "0.15.1 <= v < 0.16.0"
+}

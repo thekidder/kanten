@@ -24,31 +24,32 @@ fromXY xy =
 
 
 -- create circle mesh from center pos, num segments, radius, rotation
-circle : Vec3 -> Float -> Float -> Float -> List (Triangle Vertex)
-circle center n radius rot = circle' center n radius rot (2 * pi / n) []
+circle : Vec3 -> Float -> Float -> Vec3 -> Vec3 -> List (Triangle Vertex)
+circle center n radius innerColor outerColor =
+  circle' center n radius innerColor outerColor 0 (2 * pi / n) []
 
 
-circleSegment : Vec3 -> Float -> Float -> Float -> (Triangle Vertex)
-circleSegment center radius start width =
+circleSegment : Vec3 -> Float -> Vec3 -> Vec3 -> Float -> Float -> (Triangle Vertex)
+circleSegment center radius innerColor outerColor start width =
   let startPoint = fromPolar (radius, start) |> fromXY
       endPoint = fromPolar (radius, start + width) |> fromXY
   in
-    ( Vertex center (vec3 1 0 0)
-    , Vertex (Vector3.add center startPoint) (vec3 0 1 0)
-    , Vertex (Vector3.add center endPoint) (vec3 0 0 1)
+    ( Vertex center innerColor
+    , Vertex (Vector3.add center startPoint) outerColor
+    , Vertex (Vector3.add center endPoint) outerColor
     )
 
 
-circle' : Vec3 -> Float -> Float -> Float -> Float -> List (Triangle Vertex) -> List (Triangle Vertex)
-circle' center n radius start increment current =
+circle' : Vec3 -> Float -> Float -> Vec3 -> Vec3 -> Float -> Float -> List (Triangle Vertex) -> List (Triangle Vertex)
+circle' center n radius innerColor outerColor start increment current =
   let (x, y, z) = Vector3.toTuple center
-      segment = circleSegment center radius start increment
+      segment = circleSegment center radius innerColor outerColor start increment
       total = segment :: current
   in
     if n == 0 then
       total
     else
-      circle' center (n - 1) radius (start + increment) increment total
+      circle' center (n - 1) radius innerColor outerColor (start + increment) increment total
 
 
 -- Setup scaffolding, model, and actions
@@ -113,7 +114,7 @@ getViewportWidth model = 0.6 / (0.2 + lerp (toFloat model.mouseX) 0 (toFloat (fs
 render : Model -> Element
 render model =
   let m = Debug.watch "model" model
-      c = circle (vec3 0 0 0) 256 0.6 (m.t / 4000)
+      c = circle (vec3 0 0 0) 128 0.6 (vec3 1 0 0 ) (vec3 0.8 0 0)
 
   in
     webgl m.dimens

@@ -16,11 +16,11 @@ import Window exposing (..)
 
 type alias Vertex = { position : Vec3, color : Vec3 }
 
--- convert angle rads into a unit vector
-fromRot angle = (vec3 (cos angle) (sin angle) 0)
 
--- polar to cartesian coords
-fromPolar r theta = Vector3.scale r (fromRot theta)
+fromXY : (Float, Float) -> Vec3
+fromXY xy =
+  let (x, y) = xy
+  in fromTuple (x, y, 0)
 
 
 -- create circle mesh from center pos, num segments, radius, rotation
@@ -30,8 +30,8 @@ circle center n radius rot = circle' center n radius rot (2 * pi / n) []
 
 circleSegment : Vec3 -> Float -> Float -> Float -> (Triangle Vertex)
 circleSegment center radius start width =
-  let startPoint = fromPolar radius start
-      endPoint = fromPolar radius (start + width)
+  let startPoint = fromPolar (radius, start) |> fromXY
+      endPoint = fromPolar (radius, start + width) |> fromXY
   in
     ( Vertex center (vec3 1 0 0)
     , Vertex (Vector3.add center startPoint) (vec3 0 1 0)

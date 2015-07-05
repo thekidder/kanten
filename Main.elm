@@ -12,7 +12,8 @@ import Time exposing (..)
 import WebGL exposing (..)
 import Window exposing (..)
 
--- Create a mesh with two triangles
+
+-- Define geometry and mesh functions
 
 type alias Vertex = { position : Vec3, color : Vec3 }
 
@@ -51,13 +52,12 @@ circle' center n radius start increment current =
       circle' center (n - 1) radius (start + increment) increment total
 
 
--- Render the scene
+-- Setup scaffolding, model, and actions
 
 main : Signal Element
 main = Signal.map render update'
 
 
--- TODO: how to set the initial value properly?
 update' : Signal Model
 update' = Signal.Extra.foldp' update getInitial updates
 
@@ -106,6 +106,8 @@ update action model =
         viewportWidth <- (0.1 * (getViewportWidth model)) + (0.9 * model.viewportWidth)
       }
 
+
+-- define rendering
 
 getViewportWidth model = 0.6 / (0.2 + lerp (toFloat model.mouseX) 0 (toFloat (fst model.dimens)))
 

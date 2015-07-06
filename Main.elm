@@ -72,6 +72,7 @@ emptyModel =
   , impulse = vec3 0 0 0
   , velocity = vec3 0 0 0
   , position = vec3 0 0 0
+  , self = circle (vec3 0 0 0) 64 0.6 (vec3 1 0 0 ) (vec3 0.8 0 0)
   }
 
 getInitial : Action -> Model
@@ -96,6 +97,7 @@ type alias Model =
   , impulse: Vec3
   , velocity: Vec3
   , position: Vec3
+  , self: List (Triangle Vertex)
   }
 
 
@@ -174,11 +176,9 @@ getViewportWidth model = 0.6 / (0.2 + lerp (toFloat model.mouseX) 0 (toFloat (fs
 render : Model -> Element
 render model =
   let m = Debug.watch "model" model
-      c = circle model.position 64 0.6 (vec3 1 0 0 ) (vec3 0.8 0 0)
-
   in
     webgl m.dimens
-      [ entity vertexShader fragmentShader c { perspective = viewport m } ]
+      [ entity vertexShader fragmentShader m.self { perspective = viewport m, worldPos = m.position } ]
 
 
 lerp x min max = (x - min) / (max - min)
@@ -196,16 +196,17 @@ viewport model =
 
 -- Shaders
 
-vertexShader : Shader { attr | position:Vec3, color:Vec3 } { unif | perspective:Mat4 } { vcolor:Vec3 }
+vertexShader : Shader { attr | position:Vec3, color:Vec3 } { unif | perspective:Mat4, worldPos:Vec3 } { vcolor:Vec3 }
 vertexShader = [glsl|
 
 attribute vec3 position;
 attribute vec3 color;
 uniform mat4 perspective;
+uniform vec3 worldPos;
 varying vec3 vcolor;
 
 void main () {
-    gl_Position = perspective * vec4(position, 1.0);
+    gl_Position = perspective * vec4(position + worldPos, 1.0);
     vcolor = color;
 }
 

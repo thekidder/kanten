@@ -136,7 +136,7 @@ debugVec name vec =
 
 
 damp velocity =
-  scale 0.1 velocity |> Vector3.negate
+  scale 0.03 velocity |> Vector3.negate
 
 
 updateVelocity model =
@@ -144,6 +144,19 @@ updateVelocity model =
     |> add model.velocity
     |> add (damp model.velocity)
     |> debugVec "vel"
+
+
+updatePosition model =
+  model.velocity
+    |> scale (model.t / 1000)
+    |> add model.position
+
+
+doCollision model newPos =
+  let (x, y, z) = toTuple newPos
+      nextX = max -3.6 x |> min 3.6
+      nextY = max -2.6 y |> min 2.6
+  in vec3 nextX nextY z
 
 
 update : Action -> Model -> Model
@@ -158,12 +171,11 @@ update action model =
     TimeDelta t ->
       { model |
         t <- t
-      , impulse <- scale 10 model.direction
+      , impulse <- scale 40 model.direction
         |> scale (model.t / 1000)
       , velocity <- updateVelocity model
-      , position <- model.velocity
-        |> scale (model.t / 1000)
-        |> add model.position
+      , position <- updatePosition model
+        |> doCollision model
         |> debugVec "pos"
         --viewportWidth <- (0.1 * (getViewportWidth model)) + (0.9 * model.viewportWidth)
       }

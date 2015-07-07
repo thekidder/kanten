@@ -9,6 +9,7 @@ import Math.Vector3 as Vector3
 import Math.Matrix4 exposing (Mat4, makeOrtho2D)
 import Mouse exposing (position)
 import Signal exposing (mergeMany, foldp)
+import Time exposing (fps)
 import WebGL exposing (Triangle, Shader, entity, webgl)
 import Window exposing (dimensions)
 
@@ -126,7 +127,10 @@ updates =
     [ (Signal.map WindowResize Window.dimensions)
     , (Signal.map MouseMove Mouse.position)
     , (Signal.map movementVector Keyboard.arrows)
-    , (Signal.map TimeDelta AnimationFrame.frame)
+    -- swap the following two lines to use AnimationFrame based timing or simple
+    -- fps based timing
+    --, (Signal.map TimeDelta AnimationFrame.frame)
+    , (Signal.map TimeDelta (fps 60))
     ]
 
 debugVec: String -> Vec3 -> Vec3
@@ -171,13 +175,12 @@ update action model =
     TimeDelta t ->
       { model |
         t <- t
-      , impulse <- scale 40 model.direction
+      , impulse <- scale 35 model.direction
         |> scale (model.t / 1000)
       , velocity <- updateVelocity model
       , position <- updatePosition model
         |> doCollision model
         |> debugVec "pos"
-        --viewportWidth <- (0.1 * (getViewportWidth model)) + (0.9 * model.viewportWidth)
       }
 
 
@@ -187,10 +190,8 @@ getViewportWidth model = 0.6 / (0.2 + lerp (toFloat model.mouseX) 0 (toFloat (fs
 
 render : Model -> Element
 render model =
-  let m = Debug.watch "model" model
-  in
-    webgl m.dimens
-      [ entity vertexShader fragmentShader m.self { perspective = viewport m, worldPos = m.position } ]
+  webgl model.dimens
+    [ entity vertexShader fragmentShader model.self { perspective = viewport model, worldPos = model.position } ]
 
 
 lerp x min max = (x - min) / (max - min)

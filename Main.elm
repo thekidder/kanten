@@ -10,59 +10,20 @@ import Math.Matrix4 exposing (Mat4, makeOrtho2D)
 import Mouse exposing (position)
 import Signal exposing (mergeMany, foldp)
 import Time exposing (fps)
-import WebGL exposing (Triangle, Shader, entity, webgl)
+import WebGL exposing (webgl)
 import Window exposing (dimensions)
 
-
--- Define geometry and mesh functions
-
-type alias Vertex = { position : Vec3, color : Vec3 }
-
-
-fromXY : (Float, Float) -> Vec3
-fromXY xy =
-  let (x, y) = xy
-  in vec3 x y 0
-
-
--- create circle mesh from center pos, num segments, radius, rotation
-circle : Vec3 -> Float -> Float -> Vec3 -> Vec3 -> List (Triangle Vertex)
-circle center n radius innerColor outerColor =
-  circle' center n radius innerColor outerColor 0 (2 * pi / n) []
-
-
-circleSegment : Vec3 -> Float -> Vec3 -> Vec3 -> Float -> Float -> (Triangle Vertex)
-circleSegment center radius innerColor outerColor start width =
-  let startPoint = fromPolar (radius, start) |> fromXY
-      endPoint = fromPolar (radius, start + width) |> fromXY
-  in
-    ( Vertex center innerColor
-    , Vertex (Vector3.add center startPoint) outerColor
-    , Vertex (Vector3.add center endPoint) outerColor
-    )
-
-
-circle' : Vec3 -> Float -> Float -> Vec3 -> Vec3 -> Float -> Float -> List (Triangle Vertex) -> List (Triangle Vertex)
-circle' center n radius innerColor outerColor start increment current =
-  let (x, y, z) = Vector3.toTuple center
-      segment = circleSegment center radius innerColor outerColor start increment
-      total = segment :: current
-  in
-    if n == 0 then
-      total
-    else
-      circle' center (n - 1) radius innerColor outerColor (start + increment) increment total
-
+import Circle
+import Collision exposing (collision)
+import Util exposing (Vertex, debugVec)
 
 -- Setup scaffolding, model, and actions
 
 main : Signal Element
 main = Signal.map render update'
 
-
 update' : Signal Model
 update' = Signal.Extra.foldp' update getInitial updates
-
 
 emptyModel =
   { viewportWidth = 4
@@ -72,8 +33,9 @@ emptyModel =
   , direction = vec3 0 0 0
   , impulse = vec3 0 0 0
   , velocity = vec3 0 0 0
-  , position = vec3 0 0 0
-  , self = circle (vec3 0 0 0) 64 0.6 (vec3 1 0 0 ) (vec3 0.8 0 0)
+  , self = Circle.circle 64 (vec3 1 0 0) (vec3 0 0 0) 0.6
+  , obstacle = Circle.circle 64 (vec3 0 0 1) (vec3 1 0 0) 1.0
+  , collision = False
   }
 
 getInitial : Action -> Model
@@ -88,7 +50,6 @@ getInitial action =
     TimeDelta t ->
       { emptyModel | t <- t }
 
-
 type alias Model =
   { viewportWidth : Float
   , mouseX : Int
@@ -97,17 +58,16 @@ type alias Model =
   , direction: Vec3
   , impulse: Vec3
   , velocity: Vec3
-  , position: Vec3
-  , self: List (Triangle Vertex)
+  , self: Circle.Circle
+  , obstacle: Circle.Circle
+  , collision: Bool
   }
-
 
 type Action =
   MouseMove (Int, Int) |
   Move Vec3 |
   WindowResize (Int, Int) |
   TimeDelta Float
-
 
 movementVector: { x: Int, y: Int } -> Action
 movementVector arrows =
@@ -116,7 +76,6 @@ movementVector arrows =
     else vec3 (toFloat arrows.x) (toFloat arrows.y) 0
       |> normalize
       |> Move
-
 
 updates : Signal Action
 updates =
@@ -133,15 +92,8 @@ updates =
     , (Signal.map TimeDelta (fps 60))
     ]
 
-debugVec: String -> Vec3 -> Vec3
-debugVec name vec =
-  let (x, y, z) = toTuple vec
-  in Debug.watch name (x, y, z) |> fromTuple
-
-
 damp velocity =
-  scale 0.03 velocity |> Vector3.negate
-
+  scale 0.2 velocity |> Vector3.negate
 
 updateVelocity model =
     model.impulse
@@ -149,12 +101,10 @@ updateVelocity model =
     |> add (damp model.velocity)
     |> debugVec "vel"
 
-
 updatePosition model =
   model.velocity
     |> scale (model.t / 1000)
-    |> add model.position
-
+    |> add model.self.position
 
 doCollision model newPos =
   let (x, y, z) = toTuple newPos
@@ -162,6 +112,11 @@ doCollision model newPos =
       nextY = max -2.6 y |> min 2.6
   in vec3 nextX nextY z
 
+updateSelf model =
+  let self = model.self
+  in { self | position <- updatePosition model
+    |> doCollision model
+    |> debugVec "pos" }
 
 update : Action -> Model -> Model
 update action model =
@@ -178,11 +133,10 @@ update action model =
       , impulse <- scale 35 model.direction
         |> scale (model.t / 1000)
       , velocity <- updateVelocity model
-      , position <- updatePosition model
-        |> doCollision model
-        |> debugVec "pos"
+      , self <- updateSelf model
+      , collision <- Collision.collision model.self model.obstacle
+        |> Debug.watch "collision"
       }
-
 
 -- define rendering
 
@@ -191,11 +145,11 @@ getViewportWidth model = 0.6 / (0.2 + lerp (toFloat model.mouseX) 0 (toFloat (fs
 render : Model -> Element
 render model =
   webgl model.dimens
-    [ entity vertexShader fragmentShader model.self { perspective = viewport model, worldPos = model.position } ]
-
+    [ Circle.entity model.self (viewport model)
+    , Circle.entity model.obstacle (viewport model)
+    ]
 
 lerp x min max = (x - min) / (max - min)
-
 
 -- takes mouse pos and window dimens and outputs left, right, top, bottom viewport
 viewport : Model -> Mat4
@@ -205,35 +159,3 @@ viewport model =
       width = model.viewportWidth
       aspect = toFloat h / toFloat w
   in makeOrtho2D  -width width (aspect * -width) (aspect * width)
-
-
--- Shaders
-
-vertexShader : Shader { attr | position:Vec3, color:Vec3 } { unif | perspective:Mat4, worldPos:Vec3 } { vcolor:Vec3 }
-vertexShader = [glsl|
-
-attribute vec3 position;
-attribute vec3 color;
-uniform mat4 perspective;
-uniform vec3 worldPos;
-varying vec3 vcolor;
-
-void main () {
-    gl_Position = perspective * vec4(position + worldPos, 1.0);
-    vcolor = color;
-}
-
-|]
-
-
-fragmentShader : Shader {} u { vcolor:Vec3 }
-fragmentShader = [glsl|
-
-precision mediump float;
-varying vec3 vcolor;
-
-void main () {
-    gl_FragColor = vec4(vcolor, 1.0);
-}
-
-|]

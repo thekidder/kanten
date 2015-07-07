@@ -36,6 +36,7 @@ emptyModel =
   , self = Circle.circle 64 (vec3 1 0 0) (vec3 0 0 0) 0.6
   , obstacle = Circle.circle 64 (vec3 0 0 1) (vec3 1 0 0) 1.0
   , collision = False
+  , fps = { counter = 0, total = 0, last = 0, over = 0 }
   }
 
 getInitial : Action -> Model
@@ -61,6 +62,7 @@ type alias Model =
   , self: Circle.Circle
   , obstacle: Circle.Circle
   , collision: Bool
+  , fps: { counter: Int, total: Float, last: Float, over: Int }
   }
 
 type Action =
@@ -88,12 +90,12 @@ updates =
     , (Signal.map movementVector Keyboard.arrows)
     -- swap the following two lines to use AnimationFrame based timing or simple
     -- fps based timing
-    --, (Signal.map TimeDelta AnimationFrame.frame)
-    , (Signal.map TimeDelta (fps 60))
+    , (Signal.map TimeDelta AnimationFrame.frame)
+    --, (Signal.map TimeDelta (fps 60))
     ]
 
 damp velocity =
-  scale 0.2 velocity |> Vector3.negate
+  scale 0.08 velocity |> Vector3.negate
 
 updateVelocity model =
     model.impulse
@@ -118,6 +120,12 @@ updateSelf model =
     |> doCollision model
     |> debugVec "pos" }
 
+updateFps t fps =
+  let over = if t > 33 then 1 else 0
+  in if fps.counter == 100
+    then { counter = 0, total = 0, last = (fps.total / (toFloat fps.counter)) |> Debug.watch "avg ms", over = 0 }
+    else { counter = fps.counter + 1, total = fps.total + t, last = fps.last, over = fps.over + over |> Debug.watch "frames over 33ms" }
+
 update : Action -> Model -> Model
 update action model =
   case action of
@@ -136,6 +144,7 @@ update action model =
       , self <- updateSelf model
       , collision <- Collision.collision model.self model.obstacle
         |> Debug.watch "collision"
+      , fps <- updateFps t model.fps
       }
 
 -- define rendering

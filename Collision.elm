@@ -28,7 +28,7 @@ project circle axis =
 overlap: (Float, Float) -> (Float, Float) -> Bool
 overlap lhs rhs =
   let (minRange, maxRange) = orderRanges lhs rhs
-  in (fst rhs) >= (fst lhs) && (fst rhs) <= (snd lhs)
+  in (fst maxRange) >= (fst minRange) && (fst maxRange) <= (snd minRange)
 
 orderRanges: (Float, Float) -> (Float, Float) -> ((Float, Float), (Float, Float))
 orderRanges lhs rhs =

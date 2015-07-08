@@ -14,7 +14,8 @@ import WebGL exposing (webgl)
 import Window exposing (dimensions)
 
 import Circle
-import Collision exposing (collision)
+import Collision exposing (Result, collision)
+import Polygon
 import Util exposing (Vertex, debugVec)
 
 -- Setup scaffolding, model, and actions
@@ -33,9 +34,10 @@ emptyModel =
   , direction = vec3 0 0 0
   , impulse = vec3 0 0 0
   , velocity = vec3 0 0 0
-  , self = Circle.circle 64 (vec3 1 0 0) (vec3 0 0 0) 0.6
+  , self = Circle.circle 64 (vec3 1 0 0) (vec3 -1 0 0) 0.6
   , obstacle = Circle.circle 64 (vec3 0 0 1) (vec3 1 0 0) 1.0
-  , collision = False
+  , square = Polygon.square (vec3 0 1 0) (vec3 -3 0 0) 1.0
+  , collision = Collision.None
   , fps = { counter = 0, total = 0, last = 0, over = 0 }
   }
 
@@ -61,7 +63,8 @@ type alias Model =
   , velocity: Vec3
   , self: Circle.Circle
   , obstacle: Circle.Circle
-  , collision: Bool
+  , square: Polygon.Polygon
+  , collision: Collision.Result
   , fps: { counter: Int, total: Float, last: Float, over: Int }
   }
 
@@ -116,9 +119,14 @@ doCollision model newPos =
 
 updateSelf model =
   let self = model.self
-  in { self | position <- updatePosition model
-    |> doCollision model
-    |> debugVec "pos" }
+      newSelf = { self | position <-
+        updatePosition model
+          |> doCollision model
+          |> debugVec "pos" }
+  in case Collision.collision newSelf model.obstacle of
+    Collision.Collision mtv -> { newSelf |
+      position <- add newSelf.position (debugVec "mtv" mtv) }
+    Collision.None -> newSelf
 
 updateFps t fps =
   let over = if t > 33 then 1 else 0
@@ -156,6 +164,7 @@ render model =
   webgl model.dimens
     [ Circle.entity model.self (viewport model)
     , Circle.entity model.obstacle (viewport model)
+  , Polygon.entity model.square (viewport model)
     ]
 
 lerp x min max = (x - min) / (max - min)

@@ -3,10 +3,11 @@ module Collision where
 import Debug exposing (watch)
 import Math.Vector3 exposing (..)
 
-import Circle exposing (Circle, circle)
+import Circle exposing (Circle)
+import Polygon exposing (Polygon)
 import Util exposing (debugVec)
 
-
+type Shape = Circle Circle.Circle | Polygon Polygon.Polygon
 type Result = None | Collision Vec3
 
 
@@ -24,7 +25,7 @@ separatingAxis : Circle -> Circle -> Vec3
 separatingAxis rhs lhs =
   sub rhs.position lhs.position
     |> normalize
-    |>debugVec "axis"
+    |> debugVec "axis"
 
 project: Circle -> Vec3 -> (Float, Float)
 project circle axis =

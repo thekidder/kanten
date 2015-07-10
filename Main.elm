@@ -37,7 +37,7 @@ emptyModel =
   , self = Circle.circle 64 (vec3 1 0 0) (vec3 -1 0 0) 0.6
   , obstacle = Circle.circle 64 (vec3 0 0 1) (vec3 1 0 0) 1.0
   , square = Polygon.square (vec3 0 1 0) (vec3 -3 0 0) 1.0
-  , collision = Collision.None
+  -- , collision = Collision.None
   , fps = { counter = 0, total = 0, last = 0, over = 0 }
   }
 
@@ -64,7 +64,7 @@ type alias Model =
   , self: Circle.Circle
   , obstacle: Circle.Circle
   , square: Polygon.Polygon
-  , collision: Collision.Result
+  -- , collision: Collision.Result
   , fps: { counter: Int, total: Float, last: Float, over: Int }
   }
 
@@ -121,9 +121,9 @@ updateSelf model =
   let self = model.self
       newSelf = { self | position <-
         updatePosition model
-          |> doCollision model
+          -- |> doCollision model
           |> debugVec "pos" }
-  in case Collision.collision newSelf model.obstacle of
+  in case Collision.collision (Collision.Circle newSelf) (Collision.Polygon model.square) of
     Collision.Collision mtv -> { newSelf |
       position <- add newSelf.position (debugVec "mtv" mtv) }
     Collision.None -> newSelf
@@ -150,8 +150,8 @@ update action model =
         |> scale (model.t / 1000)
       , velocity <- updateVelocity model
       , self <- updateSelf model
-      , collision <- Collision.collision model.self model.obstacle
-        |> Debug.watch "collision"
+      -- , collision <- Collision.collision model.self model.obstacle
+      --   |> Debug.watch "collision"
       , fps <- updateFps t model.fps
       }
 

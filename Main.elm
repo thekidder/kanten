@@ -164,7 +164,7 @@ render model =
   webgl model.dimens
     [ Circle.entity model.self (viewport model)
     , Circle.entity model.obstacle (viewport model)
-  , Polygon.entity model.square (viewport model)
+    , Polygon.entity model.square (viewport model)
     ]
 
 lerp x min max = (x - min) / (max - min)

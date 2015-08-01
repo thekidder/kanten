@@ -31,7 +31,7 @@ update' : Signal Model
 update' = Signal.Extra.foldp' update getInitial updates
 
 emptyModel =
-  { viewportWidth = 4
+  { viewportWidth = 20
   , dimens = (1280, 800)
   , t = 0
   , player = Player.create (vec3 0 0 0)
@@ -76,19 +76,22 @@ movementVector arrows =
       |> normalize
       |> Move
 
+-- use AnimationFrame based timing or simple fps based timing
+useRequestAnimationFrame = True
+
 updates : Signal Action
 updates =
-  mergeMany
+  let t = if useRequestAnimationFrame
+    then (Signal.map TimeDelta AnimationFrame.frame)
+    else (Signal.map TimeDelta (fps 60))
+  in mergeMany
   {- WindowResize needs to be first; ensures that the initial input to the
      foldp' is the current window dimensions
   -}
     [ (Signal.map WindowResize Window.dimensions)
     , (Signal.map MouseMove Mouse.position)
     , (Signal.map movementVector Keyboard.arrows)
-    -- swap the following two lines to use AnimationFrame based timing or simple
-    -- fps based timing
-    , (Signal.map TimeDelta AnimationFrame.frame)
-    --, (Signal.map TimeDelta (fps 60))
+    , t
     ]
 
 update : Action -> Model -> Model

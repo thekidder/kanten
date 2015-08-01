@@ -42,7 +42,7 @@ movePlayer player direction =
 updatePlayer: Player {} -> Float -> Player {}
 updatePlayer player t =
   { player |
-    impulse <- scale 35 player.direction |> scale (t / 1000) |> debugVec "impulse"
+    impulse <- scale 55 player.direction |> scale (t / 1000) |> debugVec "impulse"
   , velocity <- updateVelocity player
   , obj <- updateGameObject player t
   }

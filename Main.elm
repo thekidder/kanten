@@ -3,6 +3,7 @@ import Debug
 import Signal.Extra
 
 import Keyboard exposing (arrows)
+import Fps exposing (..)
 import GameObject exposing (..)
 import Graphics.Element exposing (Element)
 import Math.Vector3 exposing (..)
@@ -31,18 +32,13 @@ update' = Signal.Extra.foldp' update getInitial updates
 
 emptyModel =
   { viewportWidth = 4
-  -- , mouseX = 0
   , dimens = (1280, 800)
   , t = 0
-  -- , player = Circle.circle 64 (vec3 1 0 0) (vec3 -1 0 0) 0.6
   , player = Player.create (vec3 0 0 0)
-  -- , obstacle = Circle.circle 64 (vec3 0 0 1) (vec3 1 0 0) 1.0
-  -- , square = Polygon.square (vec3 0 1 0) (vec3 -3 0 0) 1.0
   , gameObjects = [
     Obstacle.circle (vec3 0 0 0) (Circle.circle 64 (vec3 0 0 1) (vec3 0 1 0) 1.0)
   ]
-  -- , collision = Collision.None
-  , fps = { counter = 0, total = 0, last = 0, over = 0 }
+  , fps = initialFps
   }
 
 getInitial : Action -> Model
@@ -50,7 +46,6 @@ getInitial action =
   case action of
     MouseMove (x, y) ->
       emptyModel
-    --   { emptyModel | mouseX <- x }
     Move direction ->
       emptyModel
     WindowResize (w, h) ->
@@ -60,16 +55,11 @@ getInitial action =
 
 type alias Model =
   { viewportWidth : Float
-  -- , mouseX : Int
   , dimens : (Int, Int)
   , t: Float
   , player: Player.Player {}
-  -- , direction: Vec3
-  -- , impulse: Vec3
-  -- , velocity: Vec3
   , gameObjects: List (GameObject {})
-  -- , collision: Collision.Result
-  , fps: { counter: Int, total: Float, last: Float, over: Int }
+  , fps: Fps {}
   }
 
 type Action =
@@ -101,16 +91,10 @@ updates =
     --, (Signal.map TimeDelta (fps 60))
     ]
 
-updateFps t fps =
-  let over = if t > 33 then 1 else 0
-  in if fps.counter == 100
-    then { counter = 0, total = 0, last = (fps.total / (toFloat fps.counter)) |> Debug.watch "avg ms", over = 0 }
-    else { counter = fps.counter + 1, total = fps.total + t, last = fps.last, over = fps.over + over |> Debug.watch "frames over 33ms" }
-
 update : Action -> Model -> Model
 update action model =
   case action of
-    MouseMove (x, y) -> model -- { model | mouseX <- x }
+    MouseMove (x, y) -> model
     Move direction -> { model | player <- movePlayer model.player direction }
     WindowResize dimens ->
       { model |
@@ -119,19 +103,11 @@ update action model =
     TimeDelta t ->
       { model |
         t <- t
-      -- , impulse <- scale 35 model.direction
-      --   |> scale (model.t / 1000)
-      -- , velocity <- updateVelocity model
-      -- , self <- updateSelf model
-      -- , collision <- Collision.collision model.self model.obstacle
-      --   |> Debug.watch "collision"
       , player <- updatePlayer model.player t
-      , fps <- updateFps t model.fps
+      , fps <- updateFps model.fps t
       }
 
 -- define rendering
-
--- getViewportWidth model = 0.6 / (0.2 + lerp (toFloat model.mouseX) 0 (toFloat (fst model.dimens)))
 
 gatherObjectRenderables: GameObject {} -> Model -> List (WebGL.Entity)
 gatherObjectRenderables g model =
@@ -147,9 +123,6 @@ render : Model -> Element
 render model =
   webgl model.dimens (List.foldl (++) [] (gatherRenderables model))
 
--- lerp x min max = (x - min) / (max - min)
-
--- takes mouse pos and window dimens and outputs left, right, top, bottom viewport
 viewport : Model -> Mat4
 viewport model =
   let (w, h) = model.dimens

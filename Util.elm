@@ -16,17 +16,28 @@ debugVec name vec =
 
   -- Shaders
 
-vertexShader : Shader { attr | position:Vec3, color:Vec3 } { unif | perspective:Mat4, worldPos:Vec3 } { vcolor:Vec3 }
+vertexShader :
+  Shader
+  { attr | position:Vec3, color:Vec3 }
+  { unif | perspective:Mat4, localPos:Vec3, worldPos:Vec3, rotation:Float }
+  { vcolor:Vec3 }
 vertexShader = [glsl|
 
 attribute vec3 position;
 attribute vec3 color;
 uniform mat4 perspective;
 uniform vec3 worldPos;
+uniform vec3 localPos;
+uniform float rotation;
 varying vec3 vcolor;
 
 void main () {
-    gl_Position = perspective * vec4(position + worldPos, 1.0);
+    mat3 rotMat;
+    rotMat[0] = vec3(cos(rotation), sin(rotation), 0);
+    rotMat[1] = vec3(-sin(rotation), cos(rotation), 0);
+    rotMat[2] = vec3(0, 0, 1);
+    vec3 l = rotMat * localPos;
+    gl_Position = perspective * vec4(l + worldPos + position, 1.0);
     vcolor = color;
 }
 

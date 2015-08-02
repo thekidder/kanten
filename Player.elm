@@ -12,10 +12,10 @@ import Util exposing (..)
 
 type alias Player p =
   { p |
-    obj: GameObject {}
-    , direction: Vec3
-    , impulse: Vec3
-    , velocity: Vec3
+    direction: Vec3
+  , impulse: Vec3
+  , velocity: Vec3
+  , obj: GameObject {}
   }
 
 create: Vec3 -> Player {}
@@ -28,11 +28,13 @@ create pos =
 
 create': Vec3 -> GameObject {}
 create' pos =
-  let c = Circle.circle 64 (vec3 1 0 0) pos 1.0
+  let c = Circle.circle 64 (vec3 1 0 0) (vec3 0 0 0) 1.0
+      eye = Circle.circle 8 (vec3 1 1 1) (vec3 0.8 0 0) 0.1
   in
     { position = pos
+    , rotation = 0.0
     , collidables = [Collision.Circle c]
-    , renderables = [Circle.entity c]
+    , renderables = [Circle.entity c, Circle.entity eye]
     }
 
 movePlayer: Player {} -> Vec3 -> Player {}
@@ -41,11 +43,11 @@ movePlayer player direction =
 
 updatePlayer: Player {} -> Float -> Player {}
 updatePlayer player t =
-  { player |
-    impulse <- scale 55 player.direction |> scale (t / 1000) |> debugVec "impulse"
-  , velocity <- updateVelocity player
-  , obj <- updateGameObject player t
-  }
+    { player |
+      impulse <- scale 55 player.direction |> scale (t / 1000) |> debugVec "impulse"
+    , velocity <- updateVelocity player
+    , obj <- updateGameObject player t
+    }
 
 
 damp velocity =
@@ -57,13 +59,22 @@ updateVelocity player =
     |> add (damp player.velocity)
     |> debugVec "vel"
 
+getRotation player =
+  if player.velocity == (vec3 0 0 0)
+    then player.obj.rotation
+    else let (x, y, z) = toTuple player.velocity
+             (r, theta) = toPolar (x, y)
+         in theta
+
 updateGameObject player t =
   let obj = player.obj
+      rotation = getRotation player
   in
     { obj |
       position <- player.velocity
         |> scale (t / 1000)
         |> add obj.position
+    , rotation <- rotation
     }
 
 

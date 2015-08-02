@@ -26,7 +26,13 @@ square color position sideLen =
 
 entity : Polygon -> Mat4 -> Entity
 entity polygon perspective =
-  WebGL.entity vertexShader fragmentShader polygon.renderable { perspective = perspective, worldPos = polygon.position }
+  let uniforms =
+    { perspective = perspective
+    , localPos = (vec3 0 0 0)
+    , worldPos = polygon.position
+    , rotation = 0
+    }
+  in WebGL.entity vertexShader fragmentShader polygon.renderable uniforms
 
 -- create polygon mesh
 renderable : List (Vec3) -> Vec3 -> Vec3 -> List (Triangle Vertex)

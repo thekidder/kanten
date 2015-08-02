@@ -16,9 +16,17 @@ circle n color position radius =
      , renderable = renderable (vec3 0 0 0) n radius color outer
      }
 
-entity : Circle -> Vec3 -> Mat4 -> Entity
-entity circle pos perspective =
-  WebGL.entity vertexShader fragmentShader circle.renderable { perspective = perspective, worldPos = add circle.position pos }
+entity : Circle -> Vec3 -> Float -> Mat4 -> Entity
+entity circle pos rot perspective =
+  let uniforms =
+    {
+      perspective = perspective
+    , worldPos = pos
+    , localPos = circle.position
+    , rotation = rot
+    }
+  in WebGL.entity vertexShader fragmentShader circle.renderable uniforms
+
 
 -- create circle mesh from center pos, num segments, radius, rotation
 renderable : Vec3 -> Int -> Float -> Vec3 -> Vec3 -> List (Triangle Vertex)

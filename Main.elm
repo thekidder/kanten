@@ -114,7 +114,7 @@ update action model =
 
 gatherObjectRenderables: GameObject {} -> Model -> List (WebGL.Entity)
 gatherObjectRenderables g model =
-  List.map (\r -> r g.position (viewport model)) g.renderables
+  List.map (\r -> r g.position g.rotation (viewport model)) g.renderables
 
 gatherRenderables: Model -> List (List (WebGL.Entity))
 gatherRenderables model =

@@ -9,6 +9,7 @@ type alias Fps f =
   , totalOverDeadline: Int
   , lastFps: Float
   , lastOverDeadline: Float
+  , maxFrame: Float
   }
 
 initialFps: Fps {}
@@ -18,13 +19,14 @@ initialFps =
   , totalOverDeadline = 0
   , lastFps = 0
   , lastOverDeadline = 0
+  , maxFrame = 0
   }
 
 -- deadline in ms for reporting high frame times
 deadline = 17
 
 -- number of frames to average stats over
-numFrames = 20
+numFrames = 60
 
 updateFps: Fps {} -> Float -> Fps {}
 updateFps fps t =
@@ -37,6 +39,7 @@ updateFps fps t =
       , lastFps = fps.totalTime / (toFloat fps.counter) |> Debug.watch "avg ms"
       , lastOverDeadline = (toFloat fps.totalOverDeadline) / (toFloat fps.counter)
           |> Debug.watch ("% frames over " ++ (toString deadline) ++ " ms")
+      , maxFrame = 0
       }
     else
       { counter = fps.counter + 1
@@ -44,4 +47,5 @@ updateFps fps t =
       , totalOverDeadline = fps.totalOverDeadline + over
       , lastFps = fps.lastFps
       , lastOverDeadline = fps.lastOverDeadline
+      , maxFrame = max fps.maxFrame t |> Debug.watch "max frame time"
       }

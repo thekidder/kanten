@@ -36,7 +36,7 @@ emptyModel =
   , t = 0
   , player = Player.create (vec3 0 0 0)
   , gameObjects = [
-    Obstacle.circle (vec3 0 0 0) (Circle.circle 64 (vec3 0 0 1) (vec3 0 1 0) 1.0)
+    Obstacle.circle (vec3 0 0 0) (Circle.circle 64 (vec3 0.5 0.12 0.11) (vec3 0 1 0) 1.0)
   ]
   , fps = initialFps
   }

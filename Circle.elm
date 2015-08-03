@@ -10,7 +10,7 @@ type alias Circle = { position: Vec3, radius: Float, renderable: List (Triangle 
 
 circle : Int -> Vec3 -> Vec3 -> Float -> Circle
 circle n color position radius =
-  let outer = sub color (vec3 0.2 0.2 0.2)
+  let outer = sub color (vec3 0.05 0.05 0.05)
   in { position = position
      , radius = radius
      , renderable = renderable (vec3 0 0 0) n radius color outer

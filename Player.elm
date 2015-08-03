@@ -28,7 +28,7 @@ create pos =
 
 create': Vec3 -> GameObject {}
 create' pos =
-  let c = Circle.circle 64 (vec3 1 0 0) (vec3 0 0 0) 1.0
+  let c = Circle.circle 64 (vec3 0.4 0.67 1) (vec3 0 0 0) 1.0
       eye = Circle.circle 8 (vec3 1 1 1) (vec3 0.8 0 0) 0.1
   in
     { position = pos

@@ -15,3 +15,8 @@ type alias GameObject g =
   , collidables: List (Shape)
   , renderables: List (Renderable)
   }
+
+-- a -> b -> new a
+collision: GameObject {} -> GameObject {} -> GameObject {}
+collision a b =
+  

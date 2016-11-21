@@ -94,6 +94,10 @@ updates =
     , t
     ]
 
+doCollision: Player.Player {} -> List (GameObject.GameObject {})
+doCollision player gameObjects =
+  List.foldl GameObject.collision
+
 update : Action -> Model -> Model
 update action model =
   case action of
@@ -104,11 +108,13 @@ update action model =
         dimens <- dimens
       }
     TimeDelta t ->
-      { model |
-        t <- t
-      , player <- updatePlayer model.player t
-      , fps <- updateFps model.fps t
-      }
+      let newPlayer = updatePlayer model.player t
+      in
+        { model |
+          t <- t
+        , player <- doCollision newPlayer gameObjects
+        , fps <- updateFps model.fps t
+        }
 
 -- define rendering
 

@@ -77,7 +77,6 @@ updateGameObject player t =
     , rotation <- rotation
     }
 
-
 doCollision model newPos =
   let (x, y, z) = toTuple newPos
       nextX = max -3.6 x |> min 3.6
